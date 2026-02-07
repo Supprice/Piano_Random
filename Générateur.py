@@ -37,4 +37,4 @@ if st.button('GÉNÉRER', use_container_width=True):
         color: #FF4B4B; padding: 40px; border: 2px solid #EEE; border-radius: 15px;">
             {res}
         </div>
-    """, unsafe_allow_status=True)
+    """, unsafe_allow_html=True) # <-- C'est ici : "html" au lieu de "status"
