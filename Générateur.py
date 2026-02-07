@@ -4,7 +4,7 @@ import random
 # Configuration de la page
 st.set_page_config(page_title="Générateur d'Accords", layout="centered")
 
-st.title("🎸 Générateur d'Accords")
+st.title("Générateur d'Accords")
 
 # Interface sur le côté ou au centre
 st.subheader("Options")
