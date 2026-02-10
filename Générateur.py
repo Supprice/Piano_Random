@@ -5,7 +5,7 @@ import time
 # Configuration de la page
 st.set_page_config(page_title="Entraînement Piano", layout="centered")
 
-st.title("Générateur d'Accords")
+st.title("🎹 Générateur d'Accords Pro")
 
 # --- PARAMÈTRES DU TIMER (Barre latérale) ---
 st.sidebar.header("Réglages du Timer")
@@ -20,14 +20,13 @@ def toggle_timer():
 label_bouton = "STOP" if st.session_state.timer_actif else "DÉMARRER LE TIMER"
 st.sidebar.button(label_bouton, on_click=toggle_timer, use_container_width=True)
 
-# --- OPTIONS À COCHER ---
+# --- OPTIONS À COCHER (Directives strictes) ---
 st.subheader("Options de l'accord")
 col1, col2 = st.columns(2)
 
 with col1:
     opt_min = st.checkbox("Min (-)")
     opt_altere = st.checkbox("Altéré (#/b)")
-    # Division de la 7ème en deux options
     opt_7maj = st.checkbox("7ème Majeure (Δ7)")
     opt_7dom = st.checkbox("7ème Dominante (7)")
 with col2:
@@ -37,35 +36,37 @@ with col2:
 
 # --- LOGIQUE DE GÉNÉRATION ---
 def generer_accord():
+    # La seule chose qui reste toujours aléatoire : la note de base
     notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
     res = random.choice(notes)
     
-    # 1. Altéré
+    # 1. Altéré : Si coché, on choisit obligatoirement entre # ou b
     if opt_altere:
-        res += random.choice(['#', 'b', ''])
+        res += random.choice(['#', 'b'])
     
-    # 2. Mineur
-    if opt_min and random.choice([True, False]):
+    # 2. Mineur : Si coché, le '-' est appliqué systématiquement
+    if opt_min:
         res += "-"
     
-    # 3. Logique des 7èmes (Majeure ou Dominante)
+    # 3. Logique des 7èmes
+    # Si les deux sont cochées, le hasard choisit entre les deux pour éviter un conflit
     possibilites_7 = []
     if opt_7maj: possibilites_7.append("Δ7")
     if opt_7dom: possibilites_7.append("7")
     
-    if possibilites_7 and random.choice([True, False]):
+    if possibilites_7:
         res += random.choice(possibilites_7)
 
-    # 4. Tensions
-    if opt_ten and random.choice([True, False]):
+    # 4. Tensions : Si coché, une tension est ajoutée obligatoirement
+    if opt_ten:
         res += f" ({random.choice(['9', '11', '13'])})"
         
-    # 5. Renversement
-    if opt_renv and random.choice([True, False]):
+    # 5. Renversement : Si coché, un chiffre est ajouté obligatoirement
+    if opt_renv:
         res += f" ({random.randint(1, 4)})"
         
-    # 6. Drop 2
-    if opt_drop2 and random.choice([True, False]):
+    # 6. Drop 2 : Si coché, est ajouté obligatoirement
+    if opt_drop2:
         res += " Drop 2"
         
     return res
@@ -86,7 +87,7 @@ if st.session_state.timer_actif:
         time.sleep(seconds)
         st.rerun()
 else:
-    if st.button('GÉNÉRER MANUELLEMENT', use_container_width=True):
+    if st.button('GÉNÉRER UN ACCORD', use_container_width=True):
         accord = generer_accord()
         with placeholder.container():
             st.markdown(f"""
