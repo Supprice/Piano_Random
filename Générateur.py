@@ -5,7 +5,7 @@ import time
 # Configuration de la page
 st.set_page_config(page_title="Entraînement Piano", layout="centered")
 
-st.title("🎹 Générateur d'Accords Pro")
+st.title("Générateur d'Accords V2")
 
 # --- PARAMÈTRES DU TIMER (Barre latérale) ---
 st.sidebar.header("Réglages du Timer")
