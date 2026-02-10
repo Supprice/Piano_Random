@@ -7,19 +7,16 @@ st.set_page_config(page_title="Entraînement Piano", layout="centered")
 
 st.title("🎹 Générateur d'Accords Pro")
 
-# --- PARAMÈTRES DU TIMER ---
+# --- PARAMÈTRES DU TIMER (Barre latérale) ---
 st.sidebar.header("Réglages du Timer")
-# Sélection du temps entre deux accords
 seconds = st.sidebar.number_input("Secondes entre accords", min_value=1, max_value=30, value=5)
 
-# État du timer (on utilise session_state pour que l'app se souvienne s'il est lancé)
 if 'timer_actif' not in st.session_state:
     st.session_state.timer_actif = False
 
 def toggle_timer():
     st.session_state.timer_actif = not st.session_state.timer_actif
 
-# Bouton pour démarrer ou arrêter
 label_bouton = "STOP" if st.session_state.timer_actif else "DÉMARRER LE TIMER"
 st.sidebar.button(label_bouton, on_click=toggle_timer, use_container_width=True)
 
@@ -30,7 +27,9 @@ col1, col2 = st.columns(2)
 with col1:
     opt_min = st.checkbox("Min (-)")
     opt_altere = st.checkbox("Altéré (#/b)")
-    opt_7eme = st.checkbox("7ème (Δ7 / 7)")
+    # Division de la 7ème en deux options
+    opt_7maj = st.checkbox("7ème Majeure (Δ7)")
+    opt_7dom = st.checkbox("7ème Dominante (7)")
 with col2:
     opt_renv = st.checkbox("Renversement (1-4)")
     opt_drop2 = st.checkbox("Drop 2")
@@ -49,9 +48,13 @@ def generer_accord():
     if opt_min and random.choice([True, False]):
         res += "-"
     
-    # 3. 7ème
-    if opt_7eme and random.choice([True, False]):
-        res += random.choice(["Δ7", "7"])
+    # 3. Logique des 7èmes (Majeure ou Dominante)
+    possibilites_7 = []
+    if opt_7maj: possibilites_7.append("Δ7")
+    if opt_7dom: possibilites_7.append("7")
+    
+    if possibilites_7 and random.choice([True, False]):
+        res += random.choice(possibilites_7)
 
     # 4. Tensions
     if opt_ten and random.choice([True, False]):
@@ -70,7 +73,6 @@ def generer_accord():
 # --- AFFICHAGE ---
 placeholder = st.empty()
 
-# Si le timer est actif, on boucle
 if st.session_state.timer_actif:
     while st.session_state.timer_actif:
         accord = generer_accord()
@@ -84,7 +86,6 @@ if st.session_state.timer_actif:
         time.sleep(seconds)
         st.rerun()
 else:
-    # Si timer éteint, bouton manuel classique
     if st.button('GÉNÉRER MANUELLEMENT', use_container_width=True):
         accord = generer_accord()
         with placeholder.container():
