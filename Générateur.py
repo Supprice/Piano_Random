@@ -11,6 +11,9 @@ st.title("🎹 Générateur d'Accords Pro")
 st.sidebar.header("Réglages du Timer")
 seconds = st.sidebar.number_input("Secondes entre accords", min_value=1, max_value=30, value=5)
 
+# NOUVELLE OPTION : Aléatoire Mineur/Majeur
+opt_alea_timer = st.sidebar.checkbox("Aléatoire Mineur/Majeur (Timer)")
+
 if 'timer_actif' not in st.session_state:
     st.session_state.timer_actif = False
 
@@ -35,21 +38,24 @@ with col2:
     opt_ten = st.checkbox("Tensions (9, 11, 13)")
 
 # --- LOGIQUE DE GÉNÉRATION ---
-def generer_accord():
-    # La seule chose qui reste toujours aléatoire : la note de base
+def generer_accord(is_timer=False):
     notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
     res = random.choice(notes)
     
-    # 1. Altéré : Si coché, on choisit obligatoirement entre # ou b
+    # 1. Altéré
     if opt_altere:
         res += random.choice(['#', 'b'])
     
-    # 2. Mineur : Si coché, le '-' est appliqué systématiquement
-    if opt_min:
+    # 2. Mineur (Logique adaptée)
+    # Si le timer est actif et l'option aléatoire cochée, on tire au sort
+    if is_timer and opt_alea_timer:
+        if random.choice([True, False]):
+            res += "-"
+    # Sinon, on suit la case à cocher strictement
+    elif opt_min:
         res += "-"
     
     # 3. Logique des 7èmes
-    # Si les deux sont cochées, le hasard choisit entre les deux pour éviter un conflit
     possibilites_7 = []
     if opt_7maj: possibilites_7.append("Δ7")
     if opt_7dom: possibilites_7.append("7")
@@ -57,15 +63,15 @@ def generer_accord():
     if possibilites_7:
         res += random.choice(possibilites_7)
 
-    # 4. Tensions : Si coché, une tension est ajoutée obligatoirement
+    # 4. Tensions
     if opt_ten:
         res += f" ({random.choice(['9', '11', '13'])})"
         
-    # 5. Renversement : Si coché, un chiffre est ajouté obligatoirement
+    # 5. Renversement
     if opt_renv:
         res += f" ({random.randint(1, 4)})"
         
-    # 6. Drop 2 : Si coché, est ajouté obligatoirement
+    # 6. Drop 2
     if opt_drop2:
         res += " Drop 2"
         
@@ -76,7 +82,8 @@ placeholder = st.empty()
 
 if st.session_state.timer_actif:
     while st.session_state.timer_actif:
-        accord = generer_accord()
+        # On précise qu'on est en mode timer
+        accord = generer_accord(is_timer=True)
         with placeholder.container():
             st.markdown(f"""
                 <div style="text-align: center; font-size: 80px; font-weight: bold; 
@@ -88,7 +95,7 @@ if st.session_state.timer_actif:
         st.rerun()
 else:
     if st.button('GÉNÉRER UN ACCORD', use_container_width=True):
-        accord = generer_accord()
+        accord = generer_accord(is_timer=False)
         with placeholder.container():
             st.markdown(f"""
                 <div style="text-align: center; font-size: 80px; font-weight: bold; 
