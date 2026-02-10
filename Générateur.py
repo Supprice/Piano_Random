@@ -2,98 +2,95 @@ import streamlit as st
 import random
 import time
 
-# --- CONFIGURATION ---
-st.set_page_config(page_title="Piano Training Pro", layout="centered")
+# Configuration de la page
+st.set_page_config(page_title="Entraînement Piano", layout="centered")
 
-# Style CSS pour le clavier et l'interface
-st.markdown("""
-    <style>
-    .piano-keys { display: flex; justify-content: center; margin-top: 20px; }
-    .white-key { width: 40px; height: 120px; border: 1px solid #000; background: white; border-radius: 0 0 5px 5px; }
-    .black-key { width: 24px; height: 70px; background: black; margin-left: -12px; margin-right: -12px; z-index: 1; border-radius: 0 0 3px 3px; }
-    .main-chord { text-align: center; font-size: 80px; font-weight: bold; color: #FF4B4B; padding: 20px; background: #f0f2f6; border-radius: 20px; }
-    </style>
-""", unsafe_allow_html=True)
+st.title("🎹 Générateur d'Accords Pro")
 
-st.title("🎹 Entraînement Piano Pro")
+# --- PARAMÈTRES DU TIMER ---
+st.sidebar.header("Réglages du Timer")
+# Sélection du temps entre deux accords
+seconds = st.sidebar.number_input("Secondes entre accords", min_value=1, max_value=30, value=5)
 
-# --- BARRE LATÉRALE (Filtres et Timer) ---
-st.sidebar.header("Paramètres d'entraînement")
+# État du timer (on utilise session_state pour que l'app se souvienne s'il est lancé)
+if 'timer_actif' not in st.session_state:
+    st.session_state.timer_actif = False
 
-# Idée 1 : Chronomètre
-auto_mode = st.sidebar.toggle("Mode Automatique (Loop)")
-seconds = st.sidebar.slider("Secondes entre accords", 2, 10, 5)
+def toggle_timer():
+    st.session_state.timer_actif = not st.session_state.timer_actif
 
-# Idée 2 : Filtre de Tonalités
-st.sidebar.subheader("Filtrer les notes")
-show_nat = st.sidebar.checkbox("Naturelles (A, B...)", value=True)
-show_sharp = st.sidebar.checkbox("Dièses (#)", value=True)
-show_flat = st.sidebar.checkbox("Bémols (b)", value=True)
+# Bouton pour démarrer ou arrêter
+label_bouton = "STOP" if st.session_state.timer_actif else "DÉMARRER LE TIMER"
+st.sidebar.button(label_bouton, on_click=toggle_timer, use_container_width=True)
 
-# --- OPTIONS D'ACCORDS ---
+# --- OPTIONS À COCHER ---
+st.subheader("Options de l'accord")
 col1, col2 = st.columns(2)
+
 with col1:
-    opt_min = st.checkbox("Inclure Mineur (-)")
-    opt_7 = st.checkbox("Inclure 7ème (Δ7 / 7)")
+    opt_min = st.checkbox("Min (-)")
+    opt_altere = st.checkbox("Altéré (#/b)")
+    opt_7eme = st.checkbox("7ème (Δ7 / 7)")
 with col2:
-    opt_ten = st.checkbox("Ajouter Tensions (9, 11, 13)") # Idée 4
-    opt_renv = st.checkbox("Renversements (1-4)")
+    opt_renv = st.checkbox("Renversement (1-4)")
+    opt_drop2 = st.checkbox("Drop 2")
+    opt_ten = st.checkbox("Tensions (9, 11, 13)")
 
 # --- LOGIQUE DE GÉNÉRATION ---
 def generer_accord():
-    # Base de notes selon les filtres (Idée 2)
-    pool = []
-    if show_nat: pool += ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-    if not pool: return "Sélectionnez une note !"
+    notes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    res = random.choice(notes)
     
-    res = random.choice(pool)
+    # 1. Altéré
+    if opt_altere:
+        res += random.choice(['#', 'b', ''])
     
-    # Altérations
-    alt = ""
-    if show_sharp and show_flat: alt = random.choice(['#', 'b', ''])
-    elif show_sharp: alt = random.choice(['#', ''])
-    elif show_flat: alt = random.choice(['b', ''])
-    res += alt
+    # 2. Mineur
+    if opt_min and random.choice([True, False]):
+        res += "-"
+    
+    # 3. 7ème
+    if opt_7eme and random.choice([True, False]):
+        res += random.choice(["Δ7", "7"])
 
-    if opt_min and random.choice([True, False]): res += "-"
-    if opt_7 and random.choice([True, False]): res += random.choice(["Δ7", "7"])
-    
-    # Idée 4 : Tensions
+    # 4. Tensions
     if opt_ten and random.choice([True, False]):
-        res += f" ({random.choice(['9', '11', '13', 'b9', '#11'])})"
+        res += f" ({random.choice(['9', '11', '13'])})"
         
+    # 5. Renversement
     if opt_renv and random.choice([True, False]):
         res += f" ({random.randint(1, 4)})"
         
-    if random.choice([True, False]): # Option Drop 2 toujours présente
+    # 6. Drop 2
+    if opt_drop2 and random.choice([True, False]):
         res += " Drop 2"
         
     return res
 
-# Gestion du rafraîchissement automatique (Idée 1)
-if auto_mode:
-    placeholder = st.empty()
-    while True:
+# --- AFFICHAGE ---
+placeholder = st.empty()
+
+# Si le timer est actif, on boucle
+if st.session_state.timer_actif:
+    while st.session_state.timer_actif:
         accord = generer_accord()
         with placeholder.container():
-            st.markdown(f'<div class="main-chord">{accord}</div>', unsafe_allow_html=True)
-            # Idée 3 : Schéma de clavier visuel
-            st.markdown("""
-                <div class="piano-keys">
-                    <div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div>
-                    <div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div>
+            st.markdown(f"""
+                <div style="text-align: center; font-size: 80px; font-weight: bold; 
+                color: #FF4B4B; padding: 50px; background: #f0f2f6; border-radius: 20px;">
+                    {accord}
                 </div>
             """, unsafe_allow_html=True)
         time.sleep(seconds)
         st.rerun()
 else:
-    if st.button("GÉNÉRER UN ACCORD", use_container_width=True):
+    # Si timer éteint, bouton manuel classique
+    if st.button('GÉNÉRER MANUELLEMENT', use_container_width=True):
         accord = generer_accord()
-        st.markdown(f'<div class="main-chord">{accord}</div>', unsafe_allow_html=True)
-        # Idée 3 : Clavier visuel
-        st.markdown("""
-            <div class="piano-keys">
-                <div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div>
-                <div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div><div class="black-key"></div><div class="white-key"></div>
-            </div>
-        """, unsafe_allow_html=True)
+        with placeholder.container():
+            st.markdown(f"""
+                <div style="text-align: center; font-size: 80px; font-weight: bold; 
+                color: #FF4B4B; padding: 50px; background: #f0f2f6; border-radius: 20px;">
+                    {accord}
+                </div>
+            """, unsafe_allow_html=True)
